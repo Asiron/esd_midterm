@@ -10,8 +10,8 @@
 #define TOUCH_SENSOR_PORT NXT_PORT_S4
 #define LIGHT_SENSOR_PORT NXT_PORT_S1
 
-#define MIN_SPEED -60
-#define MAX_SPEED -60
+#define MIN_SPEED -57
+#define MAX_SPEED -67
 
 DeclareCounter(SysTimerCnt);
 DeclareTask(LineFollowerTask);
@@ -36,7 +36,7 @@ void user_1ms_isr_type2(void)
   }
 }
 
-void ecrobot_device_intialize(void)
+void ecrobot_device_initialize(void)
 {
 	ecrobot_set_light_sensor_active(LIGHT_SENSOR_PORT);
 }
@@ -52,6 +52,7 @@ int left_brake  = 0;
 int right_brake = 0;
 int current_left_motor_speed  = 0;
 int current_right_motor_speed = 0;
+int initial_brightness = 0;
 
 MOTOR_CTR_MSG	commandSnd, comandSnd2, commandRcv;
 
@@ -61,15 +62,16 @@ TASK(LineFollowerTask)
 
 	systick_wait_ms(300);
 
+	initial_brightness = light_sensor;
+	int newBrightness = initial_brightness;
+	int beforeBrightness = initial_brightness;
+
 	while(1) {
 
-		int initialBrightness = light_sensor;
-		int newBrightness = initialBrightness;
-		int beforeBrightness = initialBrightness;
 
-		if ( newBrightness > (initialBrightness + initialBrightness * 0.25) ) {
+		if ( newBrightness < (initial_brightness * 0.77) ) {
 			// Start to lose the black line
-			if ( beforeBrightness <= newBrightness ) {
+			if ( beforeBrightness >= newBrightness ) {
 				// Turn to the right
 				commandSnd.speed = MIN_SPEED;
 				commandSnd.brake = 0;
@@ -147,6 +149,7 @@ TASK(LCDTask)
 	disp(2, "Right speed ", current_right_motor_speed);
 	disp(3, "Right brake ", right_brake);
 	disp(4, "Light ", light_sensor);
+	disp(5, "Inital light ", initial_brightness);
 	disp(5, "Touch ", touch_sensor);
 	display_update();
 	TerminateTask();
