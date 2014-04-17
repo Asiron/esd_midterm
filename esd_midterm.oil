@@ -43,17 +43,29 @@ CPU ARM
     STACKSIZE = 512;
   }; 
 
-  TASK TouchSensorTask
+  TASK LightSensorTask
   {
     AUTOSTART = TRUE
     {
       APPMODE = appmode1;
     };
-    PRIORITY = 8;
+    PRIORITY = 7;
     ACTIVATION = 1;
     SCHEDULE = FULL;
     STACKSIZE = 512;
   }; 
+
+  TASK LCDTask
+  {
+    AUTOSTART = TRUE
+    {
+      APPMODE = appmode1;
+    };
+    PRIORITY = 6;
+    ACTIVATION = 1;
+    SCHEDULE = FULL;
+    STACKSIZE = 512;
+  };
 
   TASK EmergencyTask
   {
@@ -83,7 +95,6 @@ CPU ARM
 		COMAPPMODE = "COMAPP";
   };
 
-
   MESSAGE MotorCtrMsgSnd
   {
     MESSAGEPROPERTY = SEND_STATIC_INTERNAL {
@@ -103,13 +114,16 @@ CPU ARM
     };
   };
 
+  /* Every 1 ms */
   COUNTER SysTimerCnt
   {
     MINCYCLE = 1;
     MAXALLOWEDVALUE = 10000;
-    TICKSPERBASE = 1; /* One tick is equal to 1msec */ 
+    TICKSPERBASE = 1; 
+    /* One tick is equal to 1msec */ 
   };
 
+  /* Every 10 ms */
   ALARM TouchSensorTaskTrigger
   {
     COUNTER = SysTimerCnt;
@@ -120,9 +134,42 @@ CPU ARM
     AUTOSTART = TRUE
     {
       ALARMTIME = 1;
-      CYCLETIME = 10; /* EventDispatcher is executed every 10 msec */
+      CYCLETIME = 10;
       APPMODE = appmode1;
     };
   };
+
+  /* Every 10 ms */
+  ALARM LightSensorTaskTrigger
+  {
+    COUNTER = SysTimerCnt;
+    ACTION = ACTIVATETASK
+    {
+      TASK = LightSensorTask;
+    };
+    AUTOSTART = TRUE
+    {
+      ALARMTIME = 1;
+      CYCLETIME = 10;
+      APPMODE = appmode1;
+    };
+  };
+
+  /* Every 30 ms */
+  ALARM LCDTaskTrigger
+  {
+    COUNTER = SysTimerCnt;
+    ACTION = ACTIVATETASK
+    {
+      TASK = LCDTask;
+    };
+    AUTOSTART = TRUE
+    {
+      ALARMTIME = 1;
+      CYCLETIME = 30;
+      APPMODE = appmode1;
+    };
+  };
+
 };
 
