@@ -1,4 +1,4 @@
-typedef struct MSG1_Type_tag {
-	UINT16	len;
-	char	buf[16];
-} MSG1 ;
+typedef struct motor_ctr_msg_type_tag {
+	INT8 speed;
+	INT8 brake;
+} MOTOR_CTR_MSG ;

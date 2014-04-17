@@ -18,74 +18,111 @@ CPU ARM
   /* Definition of application mode */
   APPMODE appmode1{}; 
 
-  /* Definition of OSEK_Task_Background */
-  TASK OSEK_Task_1
+  TASK LineFollowerTask
   {
     AUTOSTART = TRUE
     {
       APPMODE = appmode1;
     };
-    PRIORITY = 1; /* lowest priority */
+    PRIORITY = 1;
     ACTIVATION = 1;
     SCHEDULE = FULL;
     STACKSIZE = 512;
-    MESSAGE = SendMsg;
+    MESSAGE = MotorCtrMsgSnd;
   };
 
-  TASK OSEK_Task_2
+  TASK TouchSensorTask
+  {
+    AUTOSTART = TRUE
+    {
+      APPMODE = appmode1;
+    };
+    PRIORITY = 8;
+    ACTIVATION = 1;
+    SCHEDULE = FULL;
+    STACKSIZE = 512;
+  }; 
+
+  TASK TouchSensorTask
+  {
+    AUTOSTART = TRUE
+    {
+      APPMODE = appmode1;
+    };
+    PRIORITY = 8;
+    ACTIVATION = 1;
+    SCHEDULE = FULL;
+    STACKSIZE = 512;
+  }; 
+
+  TASK EmergencyTask
   {
     AUTOSTART = FALSE;
-    PRIORITY = 2; /* lowest priority */
+    PRIORITY = 9;
     ACTIVATION = 1;
     SCHEDULE = FULL;
     STACKSIZE = 512;
-    MESSAGE = RcvMsg;
+    MESSAGE = MotorCtrMsgSnd;
   };
 
-   COM MYCOM {
+  TASK MotorControlTask
+  {
+    AUTOSTART = FALSE;
+    PRIORITY = 10;
+    ACTIVATION = 1;
+    SCHEDULE = FULL;
+    STACKSIZE = 512;
+    MESSAGE = MotorCtrMsgRcv;
+  };
+
+  COM MYCOM {
 		COMERRORHOOK = FALSE;
 		COMUSEGETSERVICEID = TRUE;
 		COMUSEPARAMETERACCESS = TRUE;
 		COMSTARTCOMEXTENSION = FALSE;
 		COMAPPMODE = "COMAPP";
-    };
+  };
 
 
-  MESSAGE SendMsg
- {
+  MESSAGE MotorCtrMsgSnd
+  {
     MESSAGEPROPERTY = SEND_STATIC_INTERNAL {
-	CDATATYPE="MSG1";
+	    CDATATYPE = "MOTOR_CTR_MSG";
     };
- };
-  MESSAGE SendMsg2
- {
-    MESSAGEPROPERTY = SEND_STATIC_INTERNAL {
-	CDATATYPE="MSG1";
-    };
- };
-  MESSAGE SendMsg3
- {
-    MESSAGEPROPERTY = SEND_STATIC_INTERNAL {
-	CDATATYPE="MSG1";
-    };
- };
-  MESSAGE RcvMsg
- {
+  };
+
+  MESSAGE MotorCtrMsgRcv
+  {
     MESSAGEPROPERTY = RECEIVE_UNQUEUED_INTERNAL {
-	SENDINGMESSAGE=SendMsg;
-	FILTER=ALWAYS;
+  	 SENDINGMESSAGE = MotorCtrMsgSnd;
+  	 FILTER = ALWAYS;
     };
+      
     NOTIFICATION=ACTIVATETASK {
-	TASK=OSEK_Task_2;
+  	 TASK = MotorControlTask;
     };
- };
-  MESSAGE RcvMsg2
- {
-    MESSAGEPROPERTY = RECEIVE_UNQUEUED_INTERNAL {
-	SENDINGMESSAGE=SendMsg;
-	FILTER=ALWAYS;
-    };
- };
+  };
 
+  COUNTER SysTimerCnt
+  {
+    MINCYCLE = 1;
+    MAXALLOWEDVALUE = 10000;
+    TICKSPERBASE = 1; /* One tick is equal to 1msec */ 
+  };
+
+  ALARM TouchSensorTaskTrigger
+  {
+    COUNTER = SysTimerCnt;
+    ACTION = ACTIVATETASK
+    {
+      TASK = TouchSensorTask;
+    };
+    AUTOSTART = TRUE
+    {
+      ALARMTIME = 1;
+      CYCLETIME = 10; /* EventDispatcher is executed every 10 msec */
+      APPMODE = appmode1;
+    };
+  };
 };
 

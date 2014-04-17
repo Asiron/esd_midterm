@@ -1,9 +1,9 @@
 # Target specific macros
 TOPPERS_KERNEL = OSEK_COM
-TARGET = COMtest
+TARGET = esd_midterm
 TARGET_SOURCES = \
-	comtest.c
-TOPPERS_OSEK_OIL_SOURCE = ./comtest.oil
+	esd_midterm.c
+TOPPERS_OSEK_OIL_SOURCE = ./esd_midterm.oil
 
 # Don't modify below part
 O_PATH ?= build
