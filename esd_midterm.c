@@ -54,7 +54,6 @@ int right_brake  = 0;
 int current_left_motor_speed  = 0;
 int current_right_motor_speed = 0;
 int initial_brightness = 0;
-int emergency = 0;
 
 MOTOR_CTR_MSG	commandSnd, comandSnd2, commandRcv;
 
@@ -70,38 +69,52 @@ TASK(LineFollowerTask)
 
 	while(1) {
 
+		WaitEvent(LightSensorReadingEvent | EmergencyEvent);
 
+		EventMaskType mask = 0;
+		GetEvent(EmergencyTask, &mask);
 
-		if ( newBrightness < (initial_brightness * 0.77) ) {
-			// Start to lose the black line
-			if ( beforeBrightness >= newBrightness ) {
-				// Turn to the right
-				commandSnd.speed = MIN_SPEED;
+		if (EmergencyEvent & mask)
+		{
+			ClearEvent(EmergencyEvent);
+			TerminateTask();
+
+		} else if (LightSensorReadingEvent & mask) {
+
+			if ( newBrightness < (initial_brightness * 0.77) ) {
+
+				// Start to lose the black line
+				if ( beforeBrightness >= newBrightness ) {
+					// Turn to the right
+					commandSnd.speed = MIN_SPEED;
+					commandSnd.brake = 0;
+					commandSnd.motor = RIGHT_MOTOR_PORT;
+					SendMessage(MotorCtrMsgSnd, &commandSnd);
+
+					commandSnd.speed = MAX_SPEED;
+					commandSnd.brake = 0;
+					commandSnd.motor = LEFT_MOTOR_PORT;
+					SendMessage(MotorCtrMsgSnd, &commandSnd);
+
+				}
+
+				beforeBrightness = newBrightness;
+
+			} else {
+				commandSnd.speed = MAX_SPEED;
 				commandSnd.brake = 0;
 				commandSnd.motor = RIGHT_MOTOR_PORT;
 				SendMessage(MotorCtrMsgSnd, &commandSnd);
 
-				commandSnd.speed = MAX_SPEED;
+				commandSnd.speed = MIN_SPEED;
 				commandSnd.brake = 0;
 				commandSnd.motor = LEFT_MOTOR_PORT;
 				SendMessage(MotorCtrMsgSnd, &commandSnd);
-
 			}
-			beforeBrightness = newBrightness;
+			newBrightness = light_sensor;
+			ClearEvent(LightSensorReadingEvent);
 		}
-		else{
-				commandSnd.speed = MAX_SPEED;
-				commandSnd.brake = 0;
-				commandSnd.motor = RIGHT_MOTOR_PORT;
-				SendMessage(MotorCtrMsgSnd, &commandSnd);
 
-				commandSnd.speed = MIN_SPEED;
-				commandSnd.brake = 0;
-				commandSnd.motor = LEFT_MOTOR_PORT;
-				SendMessage(MotorCtrMsgSnd, &commandSnd);
-
-		}
-		newBrightness = light_sensor;
 	}
 	TerminateTask();
 }
@@ -124,32 +137,29 @@ TASK(TouchSensorTask)
 TASK(LightSensorTask)
 {
 	light_sensor = ecrobot_get_light_sensor(LIGHT_SENSOR_PORT);
+	SetEvent(LineFollowerTask, LightSensorReadingEvent)
 	TerminateTask();
 }
 
 TASK(LCDTask)
 {
 	display_clear(0);
+	
 	disp(0, "Left speed ", current_left_motor_speed);
 	disp(1, "Left brake ", left_brake);
 	disp(2, "Right speed ", current_right_motor_speed);
 	disp(3, "Right brake ", right_brake);
 	disp(4, "Light ", light_sensor);
 	disp(5, "Touch ", touch_sensor);
-	disp(6, "Inital light ", initial_brightness);
-	disp(7, "Emergency ", emergency);
+	disp(6, "Second Touch ", second_touch_sensor);
+	disp(7, "Inital light ", initial_brightness);
 	display_update();
 	TerminateTask();
 }
 
 TASK(EmergencyTask)
 {
-	WaitEvent(TouchSensorOnEvent);
-	ClearEvent(TouchSensorOnEvent);
-
-	GetEvent(EmergencyTask, &emergency);
-	//emergency++; 
-
+	SetEvent(LineFollowerTask, EmergencyEvent);
 	TerminateTask();
 }
 

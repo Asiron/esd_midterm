@@ -19,7 +19,15 @@ CPU ARM
   APPMODE appmode1{}; 
 
   EVENT TouchSensorOnEvent {
-    MASK = 0x001;
+    MASK = AUTO;
+  };
+
+  EVENT LightSensorReadingEvent {
+    MASK = AUTO;
+  };
+
+  EVENT EmergencyEvent {
+    MASK = AUTO;
   };
 
   TASK LineFollowerTask
@@ -33,7 +41,8 @@ CPU ARM
     SCHEDULE = FULL;
     STACKSIZE = 512;
     MESSAGE = MotorCtrMsgSnd;
-    //EVENT = EmergencyEvent;
+    EVENT = EmergencyEvent;
+    EVENT = LightSensorReadingEvent;
   };
 
   TASK TouchSensorTask
@@ -84,6 +93,7 @@ CPU ARM
     STACKSIZE = 512;
     MESSAGE = MotorCtrMsgSnd;
     EVENT = TouchSensorOnEvent;
+    EVENT = SecondTouchSensorOnEvent;
   };
 
   TASK MotorControlTask
