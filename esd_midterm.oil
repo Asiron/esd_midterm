@@ -93,7 +93,6 @@ CPU ARM
     STACKSIZE = 512;
     MESSAGE = MotorCtrMsgSnd;
     EVENT = TouchSensorOnEvent;
-    EVENT = SecondTouchSensorOnEvent;
   };
 
   TASK MotorControlTask
@@ -128,7 +127,7 @@ CPU ARM
   	 FILTER = ALWAYS;
     };
       
-    NOTIFICATION=ACTIVATETASK {
+    NOTIFICATION = ACTIVATETASK {
   	 TASK = MotorControlTask;
     };
   };
