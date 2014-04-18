@@ -18,6 +18,10 @@ CPU ARM
   /* Definition of application mode */
   APPMODE appmode1{}; 
 
+  EVENT TouchSensorOnEvent {
+    MASK = 0x001;
+  };
+
   TASK LineFollowerTask
   {
     AUTOSTART = TRUE
@@ -29,6 +33,7 @@ CPU ARM
     SCHEDULE = FULL;
     STACKSIZE = 512;
     MESSAGE = MotorCtrMsgSnd;
+    //EVENT = EmergencyEvent;
   };
 
   TASK TouchSensorTask
@@ -69,12 +74,16 @@ CPU ARM
 
   TASK EmergencyTask
   {
-    AUTOSTART = FALSE;
+    AUTOSTART = TRUE
+    {
+      APPMODE = appmode1;
+    };
     PRIORITY = 9;
     ACTIVATION = 1;
     SCHEDULE = FULL;
     STACKSIZE = 512;
     MESSAGE = MotorCtrMsgSnd;
+    EVENT = TouchSensorOnEvent;
   };
 
   TASK MotorControlTask
@@ -170,6 +179,5 @@ CPU ARM
       APPMODE = appmode1;
     };
   };
-
 };
 

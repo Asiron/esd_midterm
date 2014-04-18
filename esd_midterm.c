@@ -10,10 +10,11 @@
 #define TOUCH_SENSOR_PORT NXT_PORT_S4
 #define LIGHT_SENSOR_PORT NXT_PORT_S1
 
-#define MIN_SPEED -57
-#define MAX_SPEED -67
+#define MIN_SPEED 57
+#define MAX_SPEED 67
 
 DeclareCounter(SysTimerCnt);
+DeclareEvent(TouchSensorOnEvent);
 DeclareTask(LineFollowerTask);
 DeclareTask(EmergencyTask);
 DeclareTask(MotorControlTask);
@@ -48,11 +49,12 @@ void ecrobot_device_terminate(void)
 
 int touch_sensor = 0;
 int light_sensor = 0;
-int left_brake  = 0;
-int right_brake = 0;
+int left_brake   = 0;
+int right_brake  = 0;
 int current_left_motor_speed  = 0;
 int current_right_motor_speed = 0;
 int initial_brightness = 0;
+int emergency = 0;
 
 MOTOR_CTR_MSG	commandSnd, comandSnd2, commandRcv;
 
@@ -69,6 +71,7 @@ TASK(LineFollowerTask)
 	while(1) {
 
 
+
 		if ( newBrightness < (initial_brightness * 0.77) ) {
 			// Start to lose the black line
 			if ( beforeBrightness >= newBrightness ) {
@@ -83,10 +86,6 @@ TASK(LineFollowerTask)
 				commandSnd.motor = LEFT_MOTOR_PORT;
 				SendMessage(MotorCtrMsgSnd, &commandSnd);
 
-				/*
-				motorB.setPWM(10);
-				motorC.setPWM(25);
-				*/
 			}
 			beforeBrightness = newBrightness;
 		}
@@ -101,37 +100,24 @@ TASK(LineFollowerTask)
 				commandSnd.motor = LEFT_MOTOR_PORT;
 				SendMessage(MotorCtrMsgSnd, &commandSnd);
 
-			/*
-			motorB.setPWM(25);
-			motorC.setPWM(10);
-			*/
 		}
 		newBrightness = light_sensor;
-
-
-		// commandSnd.speed = 70 * direction;
-		// commandSnd.brake = 0;
-		// SendMessage(MotorCtrMsgSnd, &commandSnd);
-		// systick_wait_ms(1000);
-		// direction *= -1;
 	}
-
 	TerminateTask();
 }
 
 TASK(TouchSensorTask)
 {
+	static UINT8 old_touch_status = 0;
+
 	touch_sensor = ecrobot_get_touch_sensor(TOUCH_SENSOR_PORT);
-	if (touch_sensor) {
-		comandSnd2.motor = LEFT_MOTOR_PORT;
-		comandSnd2.speed = 0;
-		comandSnd2.brake = 1;
-		SendMessage(MotorCtrMsgSnd, &comandSnd2);
-		comandSnd2.speed = 0;
-		comandSnd2.brake = 1;
-		comandSnd2.motor = RIGHT_MOTOR_PORT;
-		SendMessage(MotorCtrMsgSnd, &comandSnd2);
+	
+	if (old_touch_status == 0 && touch_sensor == 1) {
+		SetEvent(EmergencyTask, TouchSensorOnEvent);
 	}
+
+	old_touch_status = touch_sensor;
+
 	TerminateTask();
 }
 
@@ -149,14 +135,21 @@ TASK(LCDTask)
 	disp(2, "Right speed ", current_right_motor_speed);
 	disp(3, "Right brake ", right_brake);
 	disp(4, "Light ", light_sensor);
-	disp(5, "Inital light ", initial_brightness);
 	disp(5, "Touch ", touch_sensor);
+	disp(6, "Inital light ", initial_brightness);
+	disp(7, "Emergency ", emergency);
 	display_update();
 	TerminateTask();
 }
 
 TASK(EmergencyTask)
 {
+	WaitEvent(TouchSensorOnEvent);
+	ClearEvent(TouchSensorOnEvent);
+
+	GetEvent(EmergencyTask, &emergency);
+	//emergency++; 
+
 	TerminateTask();
 }
 
