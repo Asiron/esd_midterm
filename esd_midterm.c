@@ -4,18 +4,18 @@
 #include "ecrobot_interface.h"
 #include <stdlib.h>
 
-#define LEFT_MOTOR_PORT NXT_PORT_A
-#define RIGHT_MOTOR_PORT NXT_PORT_C
+#define RIGHT_MOTOR_PORT NXT_PORT_A
+#define LEFT_MOTOR_PORT NXT_PORT_C
 #define TOUCH_SENSOR_PORT NXT_PORT_S4
 #define LIGHT_SENSOR_PORT NXT_PORT_S1
 
 #define MIN_SPEED 59
 #define MAX_SPEED 69
 
-#define EMERGENCY_SPEED 60
+#define EMERGENCY_SPEED 75
 
-#define GO_BACK_ROTATIONS 2
-#define GO_OUTSIDE_ROTATIONS 2
+#define GO_BACK_ROTATIONS 1.5
+#define GO_OUTSIDE_ROTATIONS 1.5
 #define TURN_DEGREES 200
 
 DeclareCounter(SysTimerCnt);
@@ -106,14 +106,14 @@ TASK(LineFollowerTask)
 				// Start to lose the black line
 				if ( beforeBrightness >= newBrightness ) {
 					// Turn to the right
-					send_motor_command(RIGHT_MOTOR_PORT, MIN_SPEED, 0);
-					send_motor_command(LEFT_MOTOR_PORT, MAX_SPEED, 0);
+					send_motor_command(LEFT_MOTOR_PORT, MIN_SPEED, 0);
+					send_motor_command(RIGHT_MOTOR_PORT, MAX_SPEED, 0);
 				}
 				beforeBrightness = newBrightness;
 
 			} else {
-				send_motor_command(RIGHT_MOTOR_PORT, MAX_SPEED, 0);
-				send_motor_command(LEFT_MOTOR_PORT, MIN_SPEED, 0);
+				send_motor_command(LEFT_MOTOR_PORT, MAX_SPEED, 0);
+				send_motor_command(RIGHT_MOTOR_PORT, MIN_SPEED, 0);
 			}
 			newBrightness = light_sensor;
 			ClearEvent(LightSensorReadingEvent);
@@ -166,11 +166,13 @@ TASK(EmergencyTask)
 
 	SetEvent(LineFollowerTask, EmergencyEvent);
 
+	send_encoder_request();
+
 	send_motor_command(LEFT_MOTOR_PORT, 0, 0);
 	send_motor_command(RIGHT_MOTOR_PORT, 0, 0);
 
-	int intial_left_count  = 0;
-	int intial_right_count = 0;
+	int initial_left_count  = current_left_motor_count;
+	int initial_right_count = current_right_motor_count;
 
 	int terminate = 0;
 
@@ -187,7 +189,7 @@ TASK(EmergencyTask)
 				send_motor_command(LEFT_MOTOR_PORT, -EMERGENCY_SPEED, 0);
 				send_motor_command(RIGHT_MOTOR_PORT, -EMERGENCY_SPEED, 0);
 
-				if (abs(current_right_motor_count - intial_right_count) / 360 >= GO_BACK_ROTATIONS) {
+				if (abs(current_right_motor_count - initial_right_count) / 360.0 >= GO_BACK_ROTATIONS) {
 					state = NEEDS_TURN;
 				}
 				break;
@@ -197,15 +199,15 @@ TASK(EmergencyTask)
 				send_motor_command(LEFT_MOTOR_PORT, EMERGENCY_SPEED, 0);
 				state = TURNING;
 
-				intial_left_count  = current_right_motor_count;
-				intial_right_count = current_right_motor_count;
+				initial_left_count  = current_right_motor_count;
+				initial_right_count = current_right_motor_count;
 				break;
 			}
 			case TURNING:
 			{
-				if (abs(current_right_motor_count - intial_right_count) >= TURN_DEGREES) {
+				if (abs(current_right_motor_count - initial_right_count) >= TURN_DEGREES) {
 					state = GO_AWAY;
-					intial_right_count = current_right_motor_count;
+					initial_right_count = current_right_motor_count;
 				}
 				break;
 			}
@@ -214,7 +216,7 @@ TASK(EmergencyTask)
 				send_motor_command(LEFT_MOTOR_PORT, EMERGENCY_SPEED, 0);
 				send_motor_command(RIGHT_MOTOR_PORT, EMERGENCY_SPEED, 0);
 
-				if (abs(current_right_motor_count - intial_right_count) / 360 >= GO_OUTSIDE_ROTATIONS) {
+				if (abs(current_right_motor_count - initial_right_count) / 360.0 >= GO_OUTSIDE_ROTATIONS) {
 					terminate = 1;
 				}
 				break;
