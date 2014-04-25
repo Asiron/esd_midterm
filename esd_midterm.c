@@ -55,14 +55,14 @@ int current_right_motor_count = 0;
 /* nxtOSEK hook to be invoked from an ISR in category 2 */
 void user_1ms_isr_type2(void)
 {
-  StatusType ercd;
+	StatusType ercd;
 
-  /* Increment OSEK Alarm Counter */
-  ercd = SignalCounter(SysTimerCnt);
-  if (ercd != E_OK)
-  {
-    ShutdownOS(ercd);
-  }
+	/* Increment OSEK Alarm Counter */
+	ercd = SignalCounter(SysTimerCnt);
+	if (ercd != E_OK)
+	{
+		ShutdownOS(ercd);
+	}
 }
 
 void ecrobot_device_initialize(void)
@@ -85,8 +85,8 @@ TASK(LineFollowerTask)
 	systick_wait_ms(300);
 
 	initial_brightness = light_sensor;
-	int newBrightness = initial_brightness;
-	int beforeBrightness = initial_brightness;
+	int new_brightness = initial_brightness;
+	int before_brightness = initial_brightness;
 
 	while(1) {
 
@@ -100,22 +100,21 @@ TASK(LineFollowerTask)
 			ClearEvent(EmergencyEvent);
 			TerminateTask();
 		} else if (LightSensorReadingEvent & mask) {
+			if ( new_brightness < (initial_brightness * 0.77) ) {
 
-			if ( newBrightness < (initial_brightness * 0.77) ) {
-
-				// Start to lose the black line
-				if ( beforeBrightness >= newBrightness ) {
+				if ( before_brightness >= new_brightness ) {
 					// Turn to the right
 					send_motor_command(LEFT_MOTOR_PORT, MIN_SPEED, 0);
 					send_motor_command(RIGHT_MOTOR_PORT, MAX_SPEED, 0);
 				}
-				beforeBrightness = newBrightness;
-
+				before_brightness = new_brightness;
 			} else {
+
+				// Turn to the left
 				send_motor_command(LEFT_MOTOR_PORT, MAX_SPEED, 0);
 				send_motor_command(RIGHT_MOTOR_PORT, MIN_SPEED, 0);
 			}
-			newBrightness = light_sensor;
+			new_brightness = light_sensor;
 			ClearEvent(LightSensorReadingEvent);
 		}
 

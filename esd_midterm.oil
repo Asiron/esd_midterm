@@ -36,7 +36,7 @@ CPU ARM
     {
       APPMODE = appmode1;
     };
-    PRIORITY = 1;
+    PRIORITY = 6;
     ACTIVATION = 1;
     SCHEDULE = FULL;
     STACKSIZE = 512;
@@ -51,7 +51,7 @@ CPU ARM
     {
       APPMODE = appmode1;
     };
-    PRIORITY = 8;
+    PRIORITY = 9;
     ACTIVATION = 1;
     SCHEDULE = FULL;
     STACKSIZE = 512;
@@ -75,7 +75,7 @@ CPU ARM
     {
       APPMODE = appmode1;
     };
-    PRIORITY = 6;
+    PRIORITY = 5;
     ACTIVATION = 1;
     SCHEDULE = FULL;
     STACKSIZE = 512;
@@ -87,7 +87,7 @@ CPU ARM
     {
       APPMODE = appmode1;
     };
-    PRIORITY = 9;
+    PRIORITY = 8;
     ACTIVATION = 1;
     SCHEDULE = FULL;
     STACKSIZE = 512;
