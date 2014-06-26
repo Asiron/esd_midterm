@@ -19,6 +19,9 @@
 #define TURN_DEGREES 200
 
 DeclareCounter(SysTimerCnt);
+DeclareAlarm(LCDTaskTrigger);
+DeclareAlarm(LightSensorTaskTrigger);
+
 DeclareEvent(TouchSensorOnEvent);
 DeclareEvent(LightSensorReadingEvent);
 DeclareEvent(EmergencyEvent);
@@ -75,9 +78,6 @@ void ecrobot_device_terminate(void)
 	ecrobot_set_light_sensor_inactive(LIGHT_SENSOR_PORT);
 }
 
-
-
-
 TASK(LineFollowerTask)
 {
 	StartCOM(COMAPP);
@@ -95,8 +95,7 @@ TASK(LineFollowerTask)
 		EventMaskType mask = 0;
 		GetEvent(LineFollowerTask, &mask);
 
-		if (EmergencyEvent & mask)
-		{
+		if (EmergencyEvent & mask) {
 			ClearEvent(EmergencyEvent);
 			TerminateTask();
 		} else if (LightSensorReadingEvent & mask) {
@@ -146,6 +145,7 @@ TASK(LightSensorTask)
 
 TASK(LCDTask)
 {
+	static int i = 0;
 	display_clear(0);
 	disp(0, "Left speed ", current_left_motor_speed);
 	disp(1, "Left brake ", left_brake);
@@ -153,8 +153,9 @@ TASK(LCDTask)
 	disp(3, "Right brake ", right_brake);
 	disp(4, "Light ", light_sensor);
 	disp(5, "Touch ", touch_sensor);
-	disp(6, "Inital light ", initial_brightness);
+	disp(6, "Inital light ", i);
 	display_update();
+	i++;
 	TerminateTask();
 }
 
@@ -176,6 +177,8 @@ TASK(EmergencyTask)
 	int terminate = 0;
 
 	int state = GO_BACK;
+
+	CancelAlarm(LCDTaskTrigger);
 
 	while(!terminate) {
 
